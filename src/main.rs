@@ -3,18 +3,18 @@ use std::fs;
 use std::process;
 
 mod lexer;
+mod parser; // <-- Bring the Architect online
+
 use lexer::Lexer;
-use lexer::token::Token;
+use parser::Parser;
 
 fn main() {
-    // 1. Capture the commands typed into the terminal
     let args: Vec<String> = env::args().collect();
 
-    // 2. Enforce strict CLI usage (e.g., `yarat run file.yt`)
     if args.len() < 3 || args[1] != "run" {
         eprintln!("❌ Error: Invalid command.");
         eprintln!("Usage: yarat run <filepath.yt>");
-        process::exit(1); // Exit securely without crashing
+        process::exit(1);
     }
 
     let file_path = &args[2];
@@ -24,23 +24,21 @@ fn main() {
     println!("========================================");
     println!("Loading file: {}\n", file_path);
 
-    // 3. Read the actual file from the hard drive
     let source_code = fs::read_to_string(file_path).unwrap_or_else(|err| {
         eprintln!("❌ Fatal Error: Could not read file '{}'", file_path);
         eprintln!("System Message: {}", err);
         process::exit(1);
     });
 
-    // 4. Pass the file's contents into our Lexer
-    let mut lexer = Lexer::new(&source_code);
+    // 1. Boot up the Lexer (Phase 1)
+    let lexer = Lexer::new(&source_code);
     
-    // 5. Scan the tokens
-    loop {
-        let token = lexer.next_token();
-        println!("Found Token: {:?}", token);
-        
-        if token == Token::EOF {
-            break;
-        }
-    }
+    // 2. Pass the Lexer into the Parser (Phase 2)
+    let mut parser = Parser::new(lexer);
+
+    // 3. Build the Abstract Syntax Tree
+    let ast = parser.parse_program();
+
+    // 4. Print the final mathematical structure to the terminal
+    println!("{:#?}", ast);
 }
