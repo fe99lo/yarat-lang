@@ -38,11 +38,20 @@ impl Lexer {
 
         let tok = match self.ch {
             '=' => Token::Assign,
+            '(' => Token::OpenParen, // <-- Added
+            ')' => Token::CloseParen, // <-- Added
+            ':' => Token::Colon,      // <-- Added
             '\0' => Token::EOF,
             _ => {
                 if self.is_letter(self.ch) {
                     let ident = self.read_identifier();
-                    // If it's a 3-letter uppercase word, treat it as a Currency
+                    
+                    // Intercept the 'asset' keyword
+                    if ident == "asset" {
+                        return Token::AssetKeyword;
+                    }
+                    
+                    // Intercept 3-letter uppercase Currencies
                     if ident.len() == 3 && ident.chars().all(|c| c.is_uppercase()) {
                         return Token::CurrencyTicker(ident);
                     }

@@ -2,15 +2,19 @@
 pub enum Token {
     // Finance Primitives
     MoneyLiteral(f64),       
-    CurrencyTicker(String),  
+    CurrencyTicker(String),
+    AssetKeyword,            // <-- Added this  
     
     // Text & Variables
     Identifier(String),      
     
-    // Operators
+    // Operators & Punctuation
     Assign,                  // =
+    OpenParen,               // <-- Added this (
+    CloseParen,              // <-- Added this )
+    Colon,                   // <-- Added this :
     
     // System
-    EOF,                     // End of File
-    Illegal(char),           // Catches invalid characters securely
+    EOF,                     
+    Illegal(char),           
 }
