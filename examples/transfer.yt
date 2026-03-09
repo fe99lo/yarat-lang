@@ -1,0 +1,2 @@
+asset USD = Fiat(precision: 2)
+sender_balance = 5000.00 USD

@@ -1,1 +1,10 @@
+[package]
+name = "yarat-lang"
+version = "0.1.0"
+edition = "2021"
+description = "A domain-specific programming language for modern finance."
+authors = ["Mayega Felix Onkangi"]
+
+[dependencies]
+# We are building from scratch for maximum security. 
 
