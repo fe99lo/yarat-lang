@@ -1,0 +1,30 @@
+asset KES = Fiat(precision: 2)
+
+total_shortage = 0.00 KES
+total_surplus = 0.00 KES
+
+mpesa_system_mar10 = 150000.00 KES
+mpesa_banked_mar10 = 145000.00 KES   
+
+cash_system_mar10 = 50000.00 KES
+cash_vault_mar10 = 50000.00 KES      
+
+// HERE IS THE SMART CONTRACT
+transaction Reconcile(system_expected: KES, actual_counted: KES, shortage_ledger: KES, surplus_ledger: KES) {
+    if actual_counted == system_expected {
+        day_is_balanced = true
+    } else {
+        day_is_balanced = false
+        if actual_counted > system_expected {
+            surplus_ledger = surplus_ledger + actual_counted
+            surplus_ledger = surplus_ledger - system_expected
+        } else {
+            shortage_ledger = shortage_ledger + system_expected
+            shortage_ledger = shortage_ledger - actual_counted
+        }
+    }
+}
+
+// TRIGGER THE CONTRACT
+Reconcile(mpesa_system_mar10, mpesa_banked_mar10, total_shortage, total_surplus)
+Reconcile(cash_system_mar10, cash_vault_mar10, total_shortage, total_surplus)
