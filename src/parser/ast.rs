@@ -1,34 +1,64 @@
-// The building blocks of YaraT logic
+#![allow(dead_code)]
+
+// ---------------------------------------------------------
+// THE ROOT
+// ---------------------------------------------------------
+#[derive(Debug, Clone)]
+pub struct Program {
+    pub statements: Vec<Statement>,
+}
 
 #[derive(Debug, Clone)]
+pub struct BlockStatement {
+    pub statements: Vec<Statement>,
+}
+
+// ---------------------------------------------------------
+// THE STATEMENTS 
+// ---------------------------------------------------------
+#[derive(Debug, Clone)]
 pub enum Statement {
-    // Represents: sender_balance = 5000.00 USD
-    Assignment {
-        identifier: String,
-        value: Expression,
-    },
-    
-    // Represents: asset USD = Fiat(precision: 2)
     AssetDeclaration {
         ticker: String,
         precision: f64,
     },
+    Assignment {
+        identifier: String,
+        value: Expression, 
+    },
+    IfStatement {
+        condition: Expression,
+        consequence: BlockStatement,
+        alternative: Option<BlockStatement>, 
+    },
+    // PHASE 6: Creating the strictly-typed reusable block
+    TransactionDeclaration {
+        name: String,
+        // THE UPGRADE: Now stores BOTH the parameter name and its required currency/type
+        parameters: Vec<(String, String)>, 
+        body: BlockStatement,
+    },
+    // PHASE 6: Triggering the reusable block
+    TransactionCall {
+        name: String,
+        arguments: Vec<Expression>,
+    },
+}
+
+#[derive(Debug, Clone, PartialEq)]
+pub enum Operator {
+    Plus, Minus, Multiply, Divide,
+    LessThan, GreaterThan, Equal, NotEqual,
 }
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    // Represents a pure financial value: 5000.00 USD
-    MoneyLiteral {
-        amount: f64,
-        currency: String,
+    MoneyLiteral { amount: f64, currency: String },
+    BooleanLiteral(bool), 
+    Identifier(String),   
+    BinaryOperation {
+        left: Box<Expression>,
+        operator: Operator,
+        right: Box<Expression>,
     },
-    
-    // Represents a reference to another variable
-    Identifier(String),
-}
-
-// A full YaraT program is just a list of Statements
-#[derive(Debug)]
-pub struct Program {
-    pub statements: Vec<Statement>,
 }

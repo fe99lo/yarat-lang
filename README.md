@@ -1,7 +1,5 @@
 🏦 YaraT (v1.0)
 
-The Mathematical Standard for the Next 200 Years of Finance.
-
 YaraT is a high-level, strictly-typed Domain-Specific Language (DSL) and Enterprise Web API built from the ground up in Rust. It is engineered specifically for modern banking, payment aggregators, and financial reconciliation systems.
 
 Traditional programming languages treat money as simple floating-point numbers, leading to catastrophic rounding errors and accidental currency mixing. YaraT treats money as a physical, mathematically protected entity.

@@ -3,13 +3,12 @@ use token::Token;
 
 pub struct Lexer {
     input: Vec<char>,
-    position: usize,      // Current character position
-    read_position: usize, // Next character position
-    ch: char,             // The actual character we are looking at
+    position: usize,
+    read_position: usize,
+    ch: char,
 }
 
 impl Lexer {
-    // 1. Initialize the Lexer with source code
     pub fn new(input: &str) -> Self {
         let mut lexer = Lexer {
             input: input.chars().collect(),
@@ -21,10 +20,9 @@ impl Lexer {
         lexer
     }
 
-    // 2. Move forward one character safely
     fn read_char(&mut self) {
         if self.read_position >= self.input.len() {
-            self.ch = '\0'; // End of file
+            self.ch = '\0';
         } else {
             self.ch = self.input[self.read_position];
         }
@@ -32,60 +30,67 @@ impl Lexer {
         self.read_position += 1;
     }
 
-    // 3. The Core Logic: Match characters to Tokens
+    fn peek_char(&self) -> char {
+        if self.read_position >= self.input.len() { '\0' } 
+        else { self.input[self.read_position] }
+    }
+
     pub fn next_token(&mut self) -> Token {
         self.skip_whitespace();
 
         let tok = match self.ch {
-            '=' => Token::Assign,
-            '(' => Token::OpenParen, // <-- Added
-            ')' => Token::CloseParen, // <-- Added
-            ':' => Token::Colon,      // <-- Added
+            '=' => { if self.peek_char() == '=' { self.read_char(); Token::Equal } else { Token::Assign } }
+            '!' => { if self.peek_char() == '=' { self.read_char(); Token::NotEqual } else { Token::Illegal(self.ch) } }
+            '+' => Token::Plus, '-' => Token::Minus, '*' => Token::Asterisk, '/' => Token::Slash,
+            '<' => Token::LessThan, '>' => Token::GreaterThan,
+            '(' => Token::OpenParen, ')' => Token::CloseParen,
+            '{' => Token::LBrace, '}' => Token::RBrace,
+            ':' => Token::Colon, ',' => Token::Comma,
             '\0' => Token::EOF,
             _ => {
                 if self.is_letter(self.ch) {
                     let ident = self.read_identifier();
-                    
-                    // Intercept the 'asset' keyword
-                    if ident == "asset" {
-                        return Token::AssetKeyword;
-                    }
-                    
-                    // Intercept 3-letter uppercase Currencies
-                    if ident.len() == 3 && ident.chars().all(|c| c.is_uppercase()) {
-                        return Token::CurrencyTicker(ident);
-                    }
-                    return Token::Identifier(ident);
+                    return self.lookup_keyword_or_ident(&ident);
                 } else if self.ch.is_ascii_digit() {
-                    let num = self.read_number();
-                    return Token::MoneyLiteral(num);
+                    return Token::MoneyLiteral(self.read_number());
                 } else {
                     Token::Illegal(self.ch)
                 }
             }
         };
-
         self.read_char();
         tok
     }
 
-    // Helper: Read a full word
     fn read_identifier(&mut self) -> String {
         let position = self.position;
-        while self.is_letter(self.ch) {
+        while self.is_letter(self.ch) || self.ch.is_ascii_digit() {
             self.read_char();
         }
         self.input[position..self.position].iter().collect()
     }
-    
-    // Helper: Read a number
+
+    fn lookup_keyword_or_ident(&self, ident: &str) -> Token {
+        match ident {
+            "asset" => Token::AssetKeyword, "if" => Token::If, "else" => Token::Else,
+            "true" => Token::True, "false" => Token::False, "transaction" => Token::Transaction,
+            _ => {
+                // THE FIX: Forgiving currency check (allows 'kes', 'Usd' to become 'KES', 'USD')
+                if ident.len() == 3 { Token::CurrencyTicker(ident.to_uppercase()) } 
+                else { Token::Identifier(ident.to_string()) }
+            }
+        }
+    }
+
     fn read_number(&mut self) -> f64 {
         let position = self.position;
-        while self.ch.is_ascii_digit() || self.ch == '.' {
+        // THE FIX: Securely allow commas inside accounting numbers!
+        while self.ch.is_ascii_digit() || self.ch == '.' || self.ch == ',' {
             self.read_char();
         }
-        let num_str: String = self.input[position..self.position].iter().collect();
-        num_str.parse::<f64>().unwrap_or(0.0) 
+        let raw_str: String = self.input[position..self.position].iter().collect();
+        let num_str = raw_str.replace(",", ""); // Strip commas before doing math
+        num_str.parse::<f64>().unwrap_or(0.0)
     }
 
     fn is_letter(&self, ch: char) -> bool {
@@ -93,8 +98,12 @@ impl Lexer {
     }
 
     fn skip_whitespace(&mut self) {
-        while self.ch.is_whitespace() {
-            self.read_char();
+        loop {
+            if self.ch.is_whitespace() {
+                self.read_char();
+            } else if self.ch == '/' && self.peek_char() == '/' {
+                while self.ch != '\n' && self.ch != '\0' { self.read_char(); }
+            } else { break; }
         }
     }
 }
