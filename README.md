@@ -8,9 +8,9 @@ Traditional programming languages treat money as simple floating-point numbers, 
 
 🛡️ Core Architectural Pillars
 Military-Grade Security (Semantic Auditing):
-YaraT physically isolates currencies at the compiler level. The engine will instantly abort any transaction that attempts to add `KES` to `USD`, or perform math on a logical flag, preventing ledger corruption before the code even executes.Lightning Speed (< 1ms Execution):** Built on Rust's zero-cost abstractions, the YaraT engine lexes, parses, audits, and executes financial smart contracts in under one millisecond.
-Ultra-Low Memory Footprint:** Designed to run on anything from a high-end cloud cluster to a standard office laptop. The engine strictly manages its own memory state without heavy garbage collection, preventing CPU and RAM spikes.
-Enterprise Web API:** YaraT natively wraps its compiler in a high-concurrency Actix-Web server, complete with CORS security, 4KB payload limits (Buffer Overflow protection), and execution telemetry.
+YaraT physically isolates currencies at the compiler level. The engine will instantly abort any transaction that attempts to add `KES` to `USD`, or perform math on a logical flag, preventing ledger corruption before the code even executes.Lightning Speed (< 1ms Execution):Built on Rust's zero-cost abstractions, the YaraT engine lexes, parses, audits, and executes financial smart contracts in under one millisecond.
+Ultra-Low Memory Footprint: Designed to run on anything from a high-end cloud cluster to a standard office laptop. The engine strictly manages its own memory state without heavy garbage collection, preventing CPU and RAM spikes.
+Enterprise Web API: YaraT natively wraps its compiler in a high-concurrency Actix-Web server, complete with CORS security, 4KB payload limits (Buffer Overflow protection), and execution telemetry.
 
 
 💻 The Language Syntax
@@ -99,17 +99,12 @@ API Response:
 
 🏗️ System Architecture
 
-1. Forgiving Lexer:** Automatically handles human accounting formats (e.g., stripping commas from `150,000.00 KES`).
-2. Indestructible Parser:** Maps Abstract Syntax Trees (AST) and explicitly warns developers of exact syntax failures instead of silently dropping lines.
-3. Semantic Auditor:** The "Gatekeeper." Enforces `(Name, Type)` tuples on all transactions before memory allocation occurs.
-4. State Evaluator:** Processes the validated AST and dynamically updates the hash-mapped ledger memory.
+1. Forgiving Lexer: Automatically handles human accounting formats (e.g., stripping commas from `150,000.00 KES`).
+2. Indestructible Parser: Maps Abstract Syntax Trees (AST) and explicitly warns developers of exact syntax failures instead of silently dropping lines.
+3. Semantic Auditor: The "Gatekeeper." Enforces `(Name, Type)` tuples on all transactions before memory allocation occurs.
+4. State Evaluator: Processes the validated AST and dynamically updates the hash-mapped ledger memory.
 
----
 
 Built for scale. Built for security. Built for the future of money.*
 
----
 
-Once you have saved this `README.md` to your repository, your documentation is officially set.
-
-Would you like to commit this documentation to Git, and then circle back to testing the live frontend dashboard we built?
