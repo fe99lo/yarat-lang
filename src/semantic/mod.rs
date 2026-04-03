@@ -1,6 +1,7 @@
 pub mod symbol_table;
 use crate::parser::ast::{Program, Statement, Expression, Operator, BlockStatement};
 use symbol_table::SymbolTable;
+use rust_decimal::Decimal;
 
 pub struct Analyzer { pub symbol_table: SymbolTable }
 
