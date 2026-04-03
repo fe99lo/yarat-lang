@@ -1,11 +1,12 @@
 #![allow(dead_code)]
+use rust_decimal::Decimal;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Token {
     // -------------------------
     // EXISTING FOUNDATION
     // -------------------------
     // Finance Primitives
-    MoneyLiteral(f64),       
+    MoneyLiteral(Decimal),       
     CurrencyTicker(String),
     AssetKeyword,            
     

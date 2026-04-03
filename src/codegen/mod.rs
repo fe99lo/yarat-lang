@@ -1,9 +1,10 @@
 use std::collections::HashMap;
+use rust_decimal::Decimal;
 use crate::parser::ast::{Program, Statement, Expression, Operator, BlockStatement};
 
 #[derive(Debug, Clone)]
 pub enum RuntimeValue {
-    Money { amount: f64, currency: String },
+    Money { amount: Decimal, currency: String },
     Boolean(bool),
 }
 

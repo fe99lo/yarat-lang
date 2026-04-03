@@ -2,6 +2,7 @@ pub mod ast;
 use crate::lexer::Lexer;
 use crate::lexer::token::Token;
 use ast::{Program, Statement, Expression, Operator, BlockStatement};
+use rust_decimal::Decimal;
 
 #[derive(PartialEq, PartialOrd)]
 enum Precedence { Lowest = 1, Equals = 2, LessGreater = 3, Sum = 4, Product = 5 }
@@ -73,7 +74,7 @@ impl Parser {
         self.next_token(); if self.current_token != Token::OpenParen { return None; }
         self.next_token(); if let Token::Identifier(name) = &self.current_token { if name != "precision" { return None; } } else { return None; }
         self.next_token(); if self.current_token != Token::Colon { return None; }
-        self.next_token(); let precision = match self.current_token { Token::MoneyLiteral(val) => val, _ => return None };
+        self.next_token(); let precision = match self.current_token { Token::MoneyLiteral(val) => val.to_string().parse::<u32>().unwrap_or(2), _ => return None };
         self.next_token(); if self.current_token != Token::CloseParen { return None; }
         Some(Statement::AssetDeclaration { ticker, precision })
     }

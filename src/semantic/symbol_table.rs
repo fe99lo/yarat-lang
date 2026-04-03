@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct AssetInfo {
-    pub precision: f64,
+    pub precision: u32,
 }
 
 #[derive(Debug, Clone)]
@@ -27,7 +27,7 @@ impl SymbolTable {
         }
     }
 
-    pub fn define_asset(&mut self, ticker: String, precision: f64) {
+    pub fn define_asset(&mut self, ticker: String, precision: u32) {
         self.assets.insert(ticker, AssetInfo { precision });
     }
 

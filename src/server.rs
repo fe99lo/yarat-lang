@@ -28,7 +28,7 @@ pub struct YaraResponse {
 
 fn format_runtime_value(val: &RuntimeValue) -> String {
     match val {
-        RuntimeValue::Money { amount, currency } => format!("{:.2} {}", amount, currency),
+        RuntimeValue::Money { amount, currency } => format!("{} {}", amount, currency),
         RuntimeValue::Boolean(b) => b.to_string(),
     }
 }

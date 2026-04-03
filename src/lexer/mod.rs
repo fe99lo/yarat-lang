@@ -1,5 +1,6 @@
 pub mod token;
 use token::Token;
+use rust_decimal::Decimal;
 
 pub struct Lexer {
     input: Vec<char>,
@@ -82,7 +83,7 @@ impl Lexer {
         }
     }
 
-    fn read_number(&mut self) -> f64 {
+    fn read_number(&mut self) -> Decimal {
         let position = self.position;
         // THE FIX: Securely allow commas inside accounting numbers!
         while self.ch.is_ascii_digit() || self.ch == '.' || self.ch == ',' {
@@ -90,7 +91,7 @@ impl Lexer {
         }
         let raw_str: String = self.input[position..self.position].iter().collect();
         let num_str = raw_str.replace(",", ""); // Strip commas before doing math
-        num_str.parse::<f64>().unwrap_or(0.0)
+        num_str.parse::<Decimal>().unwrap_or(Decimal::ZERO)
     }
 
     fn is_letter(&self, ch: char) -> bool {

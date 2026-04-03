@@ -6,5 +6,18 @@ description = "A domain-specific programming language for modern finance."
 authors = ["Mayega Felix Onkangi"]
 
 [dependencies]
-# We are building from scratch for maximum security. 
+# Core dependencies for enterprise-grade financial DSL
+rust_decimal = "1.33"
+rust_decimal_macros = "1.33"
+
+# Web server and async runtime
+actix-web = "4.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["full"] }
+
+# Enterprise upgrades
+actix-cors = "0.6"
+env_logger = "0.10"
+log = "0.4"
 

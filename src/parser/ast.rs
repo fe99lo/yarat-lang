@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 
+use rust_decimal::Decimal;
+
 // ---------------------------------------------------------
 // THE ROOT
 // ---------------------------------------------------------
@@ -20,7 +22,7 @@ pub struct BlockStatement {
 pub enum Statement {
     AssetDeclaration {
         ticker: String,
-        precision: f64,
+        precision: u32,
     },
     Assignment {
         identifier: String,
@@ -53,7 +55,7 @@ pub enum Operator {
 
 #[derive(Debug, Clone)]
 pub enum Expression {
-    MoneyLiteral { amount: f64, currency: String },
+    MoneyLiteral { amount: Decimal, currency: String },
     BooleanLiteral(bool), 
     Identifier(String),   
     BinaryOperation {

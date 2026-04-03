@@ -69,7 +69,7 @@ async fn main() -> std::io::Result<()> {
                 let val = &evaluator.memory[key];
                 match val {
                     codegen::RuntimeValue::Money { amount, currency } => {
-                        println!("  [{}] => {:.2} {}", key, amount, currency);
+                        println!("  [{}] => {} {}", key, amount, currency);
                     }
                     codegen::RuntimeValue::Boolean(b) => {
                         println!("  [{}] => {} (Logical State)", key, b);
