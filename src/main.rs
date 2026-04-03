@@ -3,6 +3,7 @@ mod parser;
 mod semantic;
 mod codegen;
 mod server;
+mod vm;
 
 use std::env;
 use std::fs;
@@ -54,39 +55,34 @@ async fn main() -> std::io::Result<()> {
             }
             println!("🟢 Audit Passed! YaraT code is mathematically secure.\n");
 
-            println!("--- Executing YaraT Program ---");
-            let mut evaluator = codegen::Evaluator::new();
-            evaluator.evaluate_program(&program);
+            println!("--- Executing YaraT Program (VM Engine) ---");
+            let mut vm = vm::YaraTVM::new();
+            if let Err(e) = vm.execute(&program) {
+                println!("❌ VM Execution Error: {}", e);
+                return Ok(());
+            }
             
             // ---------------------------------------------------------
             // AUDIT REPORT: Memory State
             // ---------------------------------------------------------
             println!("\n📊 FINAL MEMORY STATE:");
-            let mut sorted_keys: Vec<_> = evaluator.memory.keys().collect();
+            let memory_snapshot = vm.get_memory_snapshot();
+            let mut sorted_keys: Vec<_> = memory_snapshot.keys().collect();
             sorted_keys.sort();
             
             for key in sorted_keys {
-                let val = &evaluator.memory[key];
-                match val {
-                    codegen::RuntimeValue::Money { amount, currency } => {
-                        println!("  [{}] => {} {}", key, amount, currency);
-                    }
-                    codegen::RuntimeValue::Boolean(b) => {
-                        println!("  [{}] => {} (Logical State)", key, b);
-                    }
-                }
+                println!("  [{}] => {}", key, memory_snapshot[key]);
             }
 
             // ---------------------------------------------------------
             // AUDIT REPORT: Secure Smart Contract Vault
             // ---------------------------------------------------------
             println!("\n🏦 SECURE SMART CONTRACT VAULT:");
-            if evaluator.transaction_vault.is_empty() {
+            if vm.functions.is_empty() {
                 println!("  [Empty - No contracts registered]");
             } else {
-                for (name, (params, _body)) in &evaluator.transaction_vault {
-                    // Extract the strictly typed parameters to prove security
-                    let param_list: Vec<String> = params.iter()
+                for (name, func) in &vm.functions {
+                    let param_list: Vec<String> = func.parameters.iter()
                         .map(|(p_name, p_type)| format!("{}: {}", p_name, p_type))
                         .collect();
                     
@@ -94,6 +90,13 @@ async fn main() -> std::io::Result<()> {
                     println!("     ↳ Enforced Parameters: ({})", param_list.join(", "));
                 }
             }
+            
+            // ---------------------------------------------------------
+            // PERFORMANCE METRICS
+            // ---------------------------------------------------------
+            println!("\n⚡ VM PERFORMANCE METRICS:");
+            println!("  Transactions Executed: {}", vm.stats.transactions_executed);
+            println!("  Total Execution Time: {} ns", vm.stats.total_execution_time_ns);
             println!();
         }
         _ => {
