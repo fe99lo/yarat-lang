@@ -164,6 +164,16 @@ impl Parser {
             Token::MoneyLiteral(amount) => {
                 let val = *amount;
                 self.next_token(); 
+                // THE UPGRADE: Parse the @ symbol for strict currency typing
+                if self.current_token == Token::At {
+                    self.next_token();
+                    if let Token::CurrencyTicker(currency) = &self.current_token {
+                        return Some(Expression::MoneyLiteral { amount: val, currency: currency.clone() });
+                    } else {
+                        return None;
+                    }
+                }
+                // Fallback: legacy syntax without @
                 if let Token::CurrencyTicker(currency) = &self.current_token {
                     Some(Expression::MoneyLiteral { amount: val, currency: currency.clone() })
                 } else { None }
