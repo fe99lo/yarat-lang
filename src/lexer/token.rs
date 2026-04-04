@@ -22,6 +22,7 @@ pub enum Token {
     OpenParen,               
     CloseParen,              
     Colon,                   
+    At,                      // @ (For strict currency typing: 1000.00@USD)
     
     // -------------------------
     // NEW V1.0 ADDITIONS

@@ -46,7 +46,7 @@ impl Lexer {
             '<' => Token::LessThan, '>' => Token::GreaterThan,
             '(' => Token::OpenParen, ')' => Token::CloseParen,
             '{' => Token::LBrace, '}' => Token::RBrace,
-            ':' => Token::Colon, ',' => Token::Comma,
+            ':' => Token::Colon, ',' => Token::Comma, '@' => Token::At,
             '\0' => Token::EOF,
             _ => {
                 if self.is_letter(self.ch) {
