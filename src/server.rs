@@ -58,7 +58,15 @@ async fn execute_yarat(req: web::Json<YaraRequest>) -> impl Responder {
 
     // 3. Execution
     let mut evaluator = Evaluator::new();
-    evaluator.evaluate_program(&program);
+    if let Err(eval_error) = evaluator.evaluate_program(&program) {
+        log::error!("Execution Error: {}", eval_error);
+        return HttpResponse::BadRequest().json(YaraResponse {
+            success: false,
+            execution_time_ms: start_time.elapsed().as_millis(),
+            memory_state: None,
+            error_details: Some(eval_error),
+        });
+    }
 
     // 4. State Extraction
     let mut final_memory = HashMap::new();
