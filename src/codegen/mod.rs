@@ -18,22 +18,23 @@ impl Evaluator {
         Evaluator { memory: HashMap::new(), transaction_vault: HashMap::new() }
     }
 
-    pub fn evaluate_program(&mut self, program: &Program) {
+    pub fn evaluate_program(&mut self, program: &Program) -> Result<(), String> {
         for stmt in &program.statements {
-            self.evaluate_statement(stmt);
+            self.evaluate_statement(stmt)?;
         }
+        Ok(())
     }
 
     // ---------------------------------------------------------
     // STATEMENT EXECUTION
     // ---------------------------------------------------------
-    fn evaluate_statement(&mut self, stmt: &Statement) {
+    fn evaluate_statement(&mut self, stmt: &Statement) -> Result<(), String> {
         match stmt {
             Statement::AssetDeclaration { ticker, precision } => {
                 println!("🏦 Execution: Initializing system for asset '{}' with {} decimal places.", ticker, precision);
             }
             Statement::Assignment { identifier, value } => {
-                let evaluated_val = self.evaluate_expression(value);
+                let evaluated_val = self.evaluate_expression(value)?;
                 self.memory.insert(identifier.clone(), evaluated_val.clone());
                 
                 match evaluated_val {
@@ -46,12 +47,12 @@ impl Evaluator {
                 }
             }
             Statement::IfStatement { condition, consequence, alternative } => {
-                let cond_val = self.evaluate_expression(condition);
+                let cond_val = self.evaluate_expression(condition)?;
                 if let RuntimeValue::Boolean(is_true) = cond_val {
                     if is_true {
-                        self.evaluate_block(consequence);
+                        self.evaluate_block(consequence)?;
                     } else if let Some(alt_block) = alternative {
-                        self.evaluate_block(alt_block);
+                        self.evaluate_block(alt_block)?;
                     }
                 }
             }
@@ -73,7 +74,7 @@ impl Evaluator {
                     // Step 1: Inject the balances into the contract's local parameters
                     for (i, arg_expr) in arguments.iter().enumerate() {
                         let param_name = params[i].0.clone();
-                        let val = self.evaluate_expression(arg_expr);
+                        let val = self.evaluate_expression(arg_expr)?;
                         self.memory.insert(param_name.clone(), val);
 
                         // If the argument was an account (like 'narok_wallet'), map it to the parameter (like 'sender')
@@ -83,7 +84,7 @@ impl Evaluator {
                     }
 
                     // Step 2: Run the smart contract logic
-                    self.evaluate_block(&body);
+                    self.evaluate_block(&body)?;
 
                     // Step 3: Write the updated balances BACK to the original accounts!
                     for (orig_account, param_name) in write_backs {
@@ -98,53 +99,73 @@ impl Evaluator {
                 }
             }
         }
+        Ok(())
     }
 
-    fn evaluate_block(&mut self, block: &BlockStatement) {
+    fn evaluate_block(&mut self, block: &BlockStatement) -> Result<(), String> {
         for stmt in &block.statements {
-            self.evaluate_statement(stmt);
+            self.evaluate_statement(stmt)?;
         }
+        Ok(())
     }
 
     // ---------------------------------------------------------
     // EXPRESSION CALCULATION
     // ---------------------------------------------------------
-    fn evaluate_expression(&self, expr: &Expression) -> RuntimeValue {
+    fn evaluate_expression(&self, expr: &Expression) -> Result<RuntimeValue, String> {
         match expr {
             Expression::MoneyLiteral { amount, currency } => {
-                RuntimeValue::Money { amount: *amount, currency: currency.clone() }
+                Ok(RuntimeValue::Money { amount: *amount, currency: currency.clone() })
             }
             Expression::BooleanLiteral(b) => {
-                RuntimeValue::Boolean(*b)
+                Ok(RuntimeValue::Boolean(*b))
             }
             Expression::Identifier(name) => {
-                self.memory.get(name).cloned().unwrap_or(RuntimeValue::Boolean(false)) 
+                self.memory.get(name).cloned()
+                    .ok_or_else(|| format!("Undefined variable: '{}'", name))
             }
             Expression::BinaryOperation { left, operator, right } => {
-                let left_val = self.evaluate_expression(left);
-                let right_val = self.evaluate_expression(right);
+                let left_val = self.evaluate_expression(left)?;
+                let right_val = self.evaluate_expression(right)?;
 
                 match (left_val, right_val) {
-                    (RuntimeValue::Money { amount: l_amt, currency: l_cur }, RuntimeValue::Money { amount: r_amt, currency: _ }) => {
+                    (RuntimeValue::Money { amount: l_amt, currency: l_cur }, RuntimeValue::Money { amount: r_amt, currency: r_cur }) => {
+                        // Enforce currency matching to prevent cross-currency arithmetic
+                        if l_cur != r_cur {
+                            return Err(format!("Currency mismatch: cannot {} {} with {}", 
+                                match operator {
+                                    Operator::Plus => "add",
+                                    Operator::Minus => "subtract",
+                                    Operator::Multiply => "multiply",
+                                    Operator::Divide => "divide",
+                                    _ => "operate on",
+                                },
+                                l_cur, r_cur));
+                        }
                         match operator {
-                            Operator::Plus => RuntimeValue::Money { amount: l_amt + r_amt, currency: l_cur },
-                            Operator::Minus => RuntimeValue::Money { amount: l_amt - r_amt, currency: l_cur },
-                            Operator::Multiply => RuntimeValue::Money { amount: l_amt * r_amt, currency: l_cur },
-                            Operator::Divide => RuntimeValue::Money { amount: l_amt / r_amt, currency: l_cur },
-                            Operator::LessThan => RuntimeValue::Boolean(l_amt < r_amt),
-                            Operator::GreaterThan => RuntimeValue::Boolean(l_amt > r_amt),
-                            Operator::Equal => RuntimeValue::Boolean(l_amt == r_amt),
-                            Operator::NotEqual => RuntimeValue::Boolean(l_amt != r_amt),
+                            Operator::Plus => Ok(RuntimeValue::Money { amount: l_amt + r_amt, currency: l_cur }),
+                            Operator::Minus => Ok(RuntimeValue::Money { amount: l_amt - r_amt, currency: l_cur }),
+                            Operator::Multiply => Ok(RuntimeValue::Money { amount: l_amt * r_amt, currency: l_cur }),
+                            Operator::Divide => {
+                                if r_amt == rust_decimal::Decimal::ZERO {
+                                    return Err("Division by zero".to_string());
+                                }
+                                Ok(RuntimeValue::Money { amount: l_amt / r_amt, currency: l_cur })
+                            },
+                            Operator::LessThan => Ok(RuntimeValue::Boolean(l_amt < r_amt)),
+                            Operator::GreaterThan => Ok(RuntimeValue::Boolean(l_amt > r_amt)),
+                            Operator::Equal => Ok(RuntimeValue::Boolean(l_amt == r_amt)),
+                            Operator::NotEqual => Ok(RuntimeValue::Boolean(l_amt != r_amt)),
                         }
                     }
                     (RuntimeValue::Boolean(l_bool), RuntimeValue::Boolean(r_bool)) => {
                         match operator {
-                            Operator::Equal => RuntimeValue::Boolean(l_bool == r_bool),
-                            Operator::NotEqual => RuntimeValue::Boolean(l_bool != r_bool),
-                            _ => RuntimeValue::Boolean(false),
+                            Operator::Equal => Ok(RuntimeValue::Boolean(l_bool == r_bool)),
+                            Operator::NotEqual => Ok(RuntimeValue::Boolean(l_bool != r_bool)),
+                            _ => Err(format!("Invalid operator {:?} for boolean operands", operator)),
                         }
                     }
-                    _ => RuntimeValue::Boolean(false),
+                    _ => Err(format!("Type mismatch in binary operation: {:?} {:?} {:?}", left_val, operator, right_val)),
                 }
             }
         }
